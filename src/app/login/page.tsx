@@ -29,7 +29,11 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to sign in');
 
       login(data.user);
-      router.push('/account');
+      if (data.user?.roles?.some((r: string) => ['admin', 'inventory_manager', 'support'].includes(r))) {
+        router.push('/admin');
+      } else {
+        router.push('/account');
+      }
     } catch (err: any) {
       setErrorMsg(err.message || 'Invalid credentials');
     } finally {

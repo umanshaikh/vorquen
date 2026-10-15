@@ -16,7 +16,12 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ success: true, products });
+    const categories = await prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    return NextResponse.json({ success: true, products, categories });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 403 });
   }

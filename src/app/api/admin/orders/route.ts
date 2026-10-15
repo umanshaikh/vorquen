@@ -22,20 +22,40 @@ export async function GET(req: Request) {
         { orderNumber: { contains: search } },
         { customerEmail: { contains: search } },
         { customerPhone: { contains: search } },
+        { user: { fullName: { contains: search } } },
       ];
     }
 
     const orders = await prisma.order.findMany({
       where,
       include: {
-        items: true,
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            phoneNumber: true,
+            avatarUrl: true,
+            createdAt: true,
+          },
+        },
+        items: {
+          include: {
+            product: {
+              include: {
+                images: { where: { isPrimary: true }, take: 1 },
+              },
+            },
+            variant: true,
+          },
+        },
         payments: true,
         shipments: {
           include: { trackingEvents: true },
         },
+        returnRequests: true,
       },
       orderBy: { placedAt: 'desc' },
-      take: 50,
+      take: 100,
     });
 
     return NextResponse.json({ success: true, orders });
