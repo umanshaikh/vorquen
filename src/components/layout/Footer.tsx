@@ -2,13 +2,20 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Mail, Phone, MapPin, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function Footer() {
+  const pathname = usePathname();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Never render storefront footer on admin routes
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,15 +49,15 @@ export default function Footer() {
           {/* Brand & Mission */}
           <div className="lg:col-span-2 space-y-4">
             <span className="font-serif text-2xl font-bold tracking-tight text-white block">
-              FASHION<span className="font-light italic text-stone-400">HUB</span>
+              VORQUEN
             </span>
             <p className="text-sm text-stone-400 leading-relaxed max-w-sm">
-              Contemporary Indian fashion atelier dedicated to artisanal textiles, mindful craftsmanship, and timeless silhouettes. Designed for the discerning Indian wardrobe.
+              Contemporary high-fashion atelier dedicated to sculptural tailoring, artisanal textiles, and cinematic elegance. Designed for the discerning wardrobe.
             </p>
             <div className="space-y-2 pt-2 text-xs text-stone-400">
               <div className="flex items-center gap-2">
                 <Mail size={14} className="text-stone-300" />
-                <span>support@fashionhub.in</span>
+                <span>concierge@vorquen.com</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone size={14} className="text-stone-300" />
@@ -85,20 +92,20 @@ export default function Footer() {
               <li><Link href="/policies/shipping" className="hover:text-white transition">Shipping Policy</Link></li>
               <li><Link href="/policies/returns" className="hover:text-white transition">Returns & Exchanges</Link></li>
               <li><Link href="/policies/cancellation" className="hover:text-white transition">Cancellation Policy</Link></li>
-              <li><Link href="/contact" className="hover:text-white transition">Contact & Help Desk</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition">Contact & Concierge</Link></li>
             </ul>
           </div>
 
           {/* Newsletter Box */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-white mb-4">Private Club</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-white mb-4">VORQUEN Club</h4>
             <p className="text-xs text-stone-400 mb-3">
-              Subscribe to receive curated edition drops, secret sales, and 10% off your initial purchase.
+              Subscribe to receive curated edition drops, private showings, and 10% off your initial purchase.
             </p>
             {subscribed ? (
               <div className="flex items-center gap-2 text-emerald-400 text-xs py-2 bg-stone-800/60 px-3 rounded">
                 <CheckCircle size={16} />
-                <span>You are subscribed to FashionHub!</span>
+                <span>You are subscribed to VORQUEN Privé!</span>
               </div>
             ) : (
               <form onSubmit={handleSubscribe} className="space-y-2">
@@ -127,11 +134,11 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-stone-800 text-xs text-stone-500 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} FashionHub Atelier Pvt. Ltd. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} VORQUEN Atelier Pvt. Ltd. All rights reserved.</p>
           <div className="flex items-center space-x-6">
             <Link href="/policies/privacy" className="hover:text-stone-300 transition">Privacy Policy</Link>
             <Link href="/policies/terms" className="hover:text-stone-300 transition">Terms & Conditions</Link>
-            <Link href="/about" className="hover:text-stone-300 transition">About Us</Link>
+            <Link href="/about" className="hover:text-stone-300 transition">About VORQUEN</Link>
           </div>
         </div>
       </div>

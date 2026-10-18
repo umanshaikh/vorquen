@@ -14,6 +14,9 @@ model Profile {
   fullName     String
   phoneNumber  String?
   avatarUrl    String?
+  isOwner      Boolean   @default(false)
+  twoFactorSecret String?
+  twoFactorEnabled Boolean @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -83,19 +86,23 @@ model Product {
   sku              String?  @unique
   description      String
   shortDescription String?
-  brand            String   @default("FashionHub")
+  brand            String   @default("VORQUEN")
   categoryId       String
   audience         String   // men, women, unisex, accessories
   fabric           String?
   careInstructions String?
+  weight           Float?   // in kg
+  model3dUrl       String?  // Optional 3D model (GLB, GLTF, USDZ)
   basePrice        Float    // INR (Rupees)
   salePrice        Float?   // INR (Rupees)
   costPrice        Float    // INR (Rupees - Admin visible only)
   taxCode          String?  @default("GST_12")
+  status           String   @default("active") // active, draft, archived
   isActive         Boolean  @default(true)
   isFeatured       Boolean  @default(false)
   isNewArrival     Boolean  @default(false)
   isBestSeller     Boolean  @default(false)
+  archivedAt       DateTime?
   seoTitle         String?
   seoDescription   String?
   createdAt        DateTime @default(now())
@@ -255,6 +262,7 @@ model Order {
   shippingAddressSnapshot String   // JSON string
   billingAddressSnapshot  String?  // JSON string
   customerNotes           String?
+  internalNotes           String?
   placedAt                DateTime @default(now())
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
@@ -475,3 +483,12 @@ model NewsletterSubscriber {
   subscribedAt   DateTime  @default(now())
   unsubscribedAt DateTime?
 }
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+

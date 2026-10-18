@@ -15,6 +15,9 @@ model Profile {
   fullName     String
   phoneNumber  String?
   avatarUrl    String?
+  isOwner      Boolean   @default(false) @map("is_owner")
+  twoFactorSecret String? @map("two_factor_secret")
+  twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -91,19 +94,23 @@ model Product {
   sku              String?  @unique
   description      String
   shortDescription String?  @map("short_description")
-  brand            String   @default("FashionHub")
+  brand            String   @default("VORQUEN")
   categoryId       String   @map("category_id")
   audience         String   // men, women, unisex, accessories
   fabric           String?
   careInstructions String?  @map("care_instructions")
+  weight           Float?
+  model3dUrl       String?  @map("model_3d_url")
   basePrice        Float    @map("base_price") // INR
   salePrice        Float?   @map("sale_price") // INR
   costPrice        Float    @map("cost_price") // INR (Admin only)
   taxCode          String?  @default("GST_12") @map("tax_code")
+  status           String   @default("active")
   isActive         Boolean  @default(true) @map("is_active")
   isFeatured       Boolean  @default(false) @map("is_featured")
   isNewArrival     Boolean  @default(false) @map("is_new_arrival")
   isBestSeller     Boolean  @default(false) @map("is_best_seller")
+  archivedAt       DateTime? @map("archived_at")
   seoTitle         String?  @map("seo_title")
   seoDescription   String?  @map("seo_description")
   createdAt        DateTime @default(now()) @map("created_at")
@@ -281,6 +288,7 @@ model Order {
   shippingAddressSnapshot String   @map("shipping_address_snapshot")
   billingAddressSnapshot  String?  @map("billing_address_snapshot")
   customerNotes           String?  @map("customer_notes")
+  internalNotes           String?  @map("internal_notes")
   placedAt                DateTime @default(now()) @map("placed_at")
   createdAt               DateTime @default(now()) @map("created_at")
   updatedAt               DateTime @updatedAt @map("updated_at")
@@ -531,3 +539,14 @@ model NewsletterSubscriber {
 
   @@map("newsletter_subscribers")
 }
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("password_reset_tokens")
+}
+

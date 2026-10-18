@@ -7,9 +7,10 @@ import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 
 export const metadata: Metadata = {
-  title: 'FashionHub | Contemporary Indian Fashion & Minimalist Luxury',
-  description: 'Premium direct-to-consumer fashion atelier in India. Handcrafted linen shirts, oversized heavyweight organic tees, pleated trousers, and artisanal silk ensembles.',
-  keywords: ['fashion', 'india', 'menswear', 'womenswear', 'organic cotton', 'linen shirt', 'chanderi silk', 'minimalist aesthetic'],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  title: 'VORQUEN | Luxury Haute Couture & Contemporary Minimalist Atelier',
+  description: 'VORQUEN 3D animated fashion atelier. Artisanal luxury, sculptural tailoring, and visionary haute couture.',
+  keywords: ['VORQUEN', 'fashion', 'luxury', 'haute couture', '3d fashion', 'atelier', 'contemporary fashion'],
 };
 
 export default function RootLayout({

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, ShoppingBag } from 'lucide-react';
+import { Star, ShoppingBag, Box } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 interface ProductCardProps {
@@ -20,6 +20,7 @@ interface ProductCardProps {
     reviewCount?: number;
     images: { imageUrl: string; altText: string }[];
     variants?: { id: string; size: string; colour: string; stockQuantity: number }[];
+    model3dUrl?: string | null;
   };
 }
 
@@ -73,6 +74,12 @@ export default function ProductCard({ product }: ProductCardProps) {
           {hasDiscount && (
             <span className="bg-rose-700 text-white text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider rounded-sm">
               {discountPercent}% OFF
+            </span>
+          )}
+          {product.model3dUrl && (
+            <span className="bg-stone-950/90 backdrop-blur-sm text-amber-400 border border-amber-400/30 text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider rounded-sm flex items-center gap-1 shadow-sm">
+              <Box size={10} />
+              <span>3D Model</span>
             </span>
           )}
         </div>

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Star, Shield, Truck, RefreshCw, Ruler, Check, AlertCircle } from 'lucide-react';
+import { Star, Shield, Truck, RefreshCw, Ruler, Check, AlertCircle, Box, Sparkles, ExternalLink } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/products/ProductCard';
 
@@ -19,6 +19,20 @@ export default function ProductDetailClient({ product }: ProductDetailProps) {
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [addedSuccess, setAddedSuccess] = useState(false);
+  const [show3dMode, setShow3dMode] = useState(false);
+
+  useEffect(() => {
+    if (product.model3dUrl && typeof window !== 'undefined') {
+      const scriptId = 'google-model-viewer-script';
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement('script');
+        script.id = scriptId;
+        script.type = 'module';
+        script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js';
+        document.head.appendChild(script);
+      }
+    }
+  }, [product.model3dUrl]);
 
   // Available colours
   const availableColours = Array.from(new Set(product.variants.map((v: any) => v.colour))) as string[];
@@ -58,33 +72,104 @@ export default function ProductDetailClient({ product }: ProductDetailProps) {
         {/* Gallery Column */}
         <div className="flex flex-col-reverse sm:flex-row gap-4">
           {/* Thumbnails */}
-          {images.length > 1 && (
+          {(images.length > 1 || product.model3dUrl) && (
             <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-visible">
               {images.map((img: any, idx: number) => (
                 <button
                   key={idx}
-                  onClick={() => setSelectedImageIndex(idx)}
+                  onClick={() => {
+                    setShow3dMode(false);
+                    setSelectedImageIndex(idx);
+                  }}
                   className={`relative w-16 h-20 sm:w-20 sm:h-24 rounded border overflow-hidden flex-shrink-0 transition ${
-                    selectedImageIndex === idx ? 'border-stone-900 ring-1 ring-stone-900' : 'border-stone-200 opacity-70 hover:opacity-100'
+                    !show3dMode && selectedImageIndex === idx
+                      ? 'border-stone-900 ring-1 ring-stone-900'
+                      : 'border-stone-200 opacity-70 hover:opacity-100'
                   }`}
                 >
                   <Image src={img.imageUrl} alt={img.altText} fill className="object-cover" unoptimized />
                 </button>
               ))}
+
+              {product.model3dUrl && (
+                <button
+                  type="button"
+                  onClick={() => setShow3dMode(true)}
+                  className={`relative w-16 h-20 sm:w-20 sm:h-24 rounded border overflow-hidden flex-shrink-0 transition flex flex-col items-center justify-center bg-stone-950 text-white ${
+                    show3dMode
+                      ? 'border-amber-400 ring-2 ring-amber-400'
+                      : 'border-stone-800 opacity-85 hover:opacity-100'
+                  }`}
+                >
+                  <Box size={22} className="text-amber-400 mb-1 animate-pulse" />
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-300">3D View</span>
+                </button>
+              )}
             </div>
           )}
 
-          {/* Main Large Image */}
-          <div className="relative aspect-[3/4] flex-1 bg-stone-100 rounded-sm overflow-hidden border border-stone-200">
-            <Image
-              src={images[selectedImageIndex]?.imageUrl || images[0].imageUrl}
-              alt={images[selectedImageIndex]?.altText || product.name}
-              fill
-              priority
-              className="object-cover object-center"
-              unoptimized
-            />
-          </div>
+          {/* Main Display: 3D Model or Large Image */}
+          {show3dMode && product.model3dUrl ? (
+            <div className="relative aspect-[3/4] flex-1 bg-stone-950 rounded-sm overflow-hidden border border-stone-800 flex flex-col items-center justify-center text-white shadow-inner">
+              <div className="w-full h-full relative">
+                {/* @ts-ignore */}
+                <model-viewer
+                  src={product.model3dUrl}
+                  alt={`3D Model of ${product.name}`}
+                  auto-rotate
+                  camera-controls
+                  shadow-intensity="1"
+                  environment-image="neutral"
+                  interaction-prompt="auto"
+                  style={{ width: '100%', height: '100%', backgroundColor: '#0c0a09' }}
+                >
+                  <div slot="poster" className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-stone-400">
+                    <Box size={32} className="text-amber-400 animate-pulse mb-2" />
+                    <p className="text-xs font-mono uppercase tracking-wider">Loading 3D Fashion Creation...</p>
+                  </div>
+                </model-viewer>
+                <div className="absolute top-3 left-3 bg-stone-900/85 backdrop-blur-sm border border-stone-700 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded flex items-center gap-1.5 pointer-events-none shadow-sm">
+                  <Sparkles size={11} />
+                  <span>Interactive 3D Atelier</span>
+                </div>
+                <div className="absolute bottom-3 inset-x-3 flex justify-between items-center text-[10px] text-stone-400 pointer-events-none">
+                  <span className="bg-stone-900/80 px-2 py-0.5 rounded backdrop-blur-sm">
+                    Drag to rotate • Scroll to zoom
+                  </span>
+                  <a
+                    href={product.model3dUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-stone-900/80 hover:bg-stone-800 text-stone-300 px-2 py-0.5 rounded backdrop-blur-sm pointer-events-auto flex items-center gap-1"
+                  >
+                    <span>Asset Link</span>
+                    <ExternalLink size={9} />
+                  </a>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="relative aspect-[3/4] flex-1 bg-stone-100 rounded-sm overflow-hidden border border-stone-200">
+              <Image
+                src={images[selectedImageIndex]?.imageUrl || images[0].imageUrl}
+                alt={images[selectedImageIndex]?.altText || product.name}
+                fill
+                priority
+                className="object-cover object-center"
+                unoptimized
+              />
+              {product.model3dUrl && (
+                <button
+                  type="button"
+                  onClick={() => setShow3dMode(true)}
+                  className="absolute bottom-3 right-3 bg-stone-950/90 hover:bg-stone-900 text-white border border-stone-700 text-xs font-semibold px-3 py-1.5 rounded-sm flex items-center gap-1.5 shadow-lg backdrop-blur-sm transition"
+                >
+                  <Box size={14} className="text-amber-400" />
+                  <span>Inspect in 3D</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Product Details Column */}

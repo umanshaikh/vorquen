@@ -12,6 +12,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "node --loader ts-node/esm prisma/seed.ts || npx tsx prisma/seed.ts",
+    "setup:owner": "tsx scripts/setup-owner.ts",
     "test": "vitest run"
   },
   "dependencies": {

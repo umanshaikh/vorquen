@@ -1,4 +1,4 @@
-export type Role = 'customer' | 'support' | 'inventory_manager' | 'admin';
+export type Role = 'customer' | 'support' | 'inventory_manager' | 'admin' | 'owner';
 
 export interface UserSession {
   id: string;
@@ -6,6 +6,7 @@ export interface UserSession {
   fullName: string;
   phoneNumber?: string | null;
   roles: Role[];
+  isOwner?: boolean;
 }
 
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'completed' | 'cancelled';

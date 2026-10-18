@@ -2,15 +2,22 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, User, Search, Menu, X, Shield, Truck } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { ShoppingBag, User, Search, Menu, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 
 export default function Header() {
+  const pathname = usePathname();
   const { user } = useAuth();
   const { itemCount, openCart } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Never render storefront header on admin routes
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const navLinks = [
     { label: 'Shop All', href: '/shop' },
@@ -28,10 +35,6 @@ export default function Header() {
       window.location.href = `/shop?search=${encodeURIComponent(searchQuery.trim())}`;
     }
   };
-
-  const hasAdminRole = user?.roles.some((r) =>
-    ['admin', 'inventory_manager', 'support'].includes(r)
-  );
 
   return (
     <header className="sticky top-0 z-40 bg-sand-50/95 backdrop-blur-md border-b border-sand-200">
@@ -60,10 +63,10 @@ export default function Header() {
           <div className="flex items-center">
             <Link href="/" className="group">
               <span className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 group-hover:text-stone-700 transition">
-                FASHION<span className="font-light italic text-stone-500">HUB</span>
+                VORQUEN
               </span>
               <span className="block text-[9px] tracking-[0.25em] uppercase text-stone-500 -mt-1 font-mono">
-                Atelier India
+                Atelier
               </span>
             </Link>
           </div>
@@ -96,18 +99,6 @@ export default function Header() {
                 <Search size={14} />
               </button>
             </form>
-
-            {/* Admin Dashboard shortcut if authorized */}
-            {hasAdminRole && (
-              <Link
-                href="/admin"
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1 text-xs font-medium bg-stone-900 text-stone-100 rounded-full hover:bg-stone-800 transition"
-                title="Admin Control Center"
-              >
-                <Shield size={13} />
-                <span>Admin</span>
-              </Link>
-            )}
 
             {/* Account Link */}
             {user ? (
@@ -171,16 +162,6 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-
-          {hasAdminRole && (
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-sm font-semibold text-amber-900 pt-2 border-t border-sand-200"
-            >
-              🛡️ Admin Dashboard
-            </Link>
-          )}
         </div>
       )}
     </header>

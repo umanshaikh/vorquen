@@ -12,6 +12,21 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+export const adminLoginSchema = z.object({
+  email: z.string().email('Invalid administrator email address'),
+  password: z.string().min(1, 'Password is required'),
+  twoFactorCode: z.string().optional(),
+});
+
+export const adminForgotPasswordSchema = z.object({
+  email: z.string().email('Invalid administrator email address'),
+});
+
+export const adminResetPasswordSchema = z.object({
+  token: z.string().min(10, 'Invalid or expired password reset token'),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});
+
 export const addressSchema = z.object({
   recipientName: z.string().min(2, 'Recipient name is required'),
   phoneNumber: z.string().min(10, 'Valid 10-digit phone number is required'),
@@ -48,6 +63,20 @@ export const couponApplySchema = z.object({
   code: z.string().min(2, 'Coupon code is required').toUpperCase(),
 });
 
+export const couponCreateSchema = z.object({
+  code: z.string().min(3, 'Coupon code must be at least 3 characters').toUpperCase(),
+  description: z.string().min(5, 'Description is required'),
+  discountType: z.enum(['percentage', 'fixed_amount']),
+  discountValue: z.number().positive('Discount value must be positive'),
+  minimumOrderValue: z.number().min(0).default(0),
+  maximumDiscount: z.number().positive().optional().nullable(),
+  usageLimit: z.number().int().positive().optional().nullable(),
+  usageLimitPerUser: z.number().int().positive().default(1),
+  startsAt: z.string().optional(),
+  expiresAt: z.string().optional().nullable(),
+  isActive: z.boolean().default(true),
+});
+
 export const orderStatusTransitionSchema = z.object({
   orderId: z.string().uuid(),
   newStatus: z.enum(['pending', 'confirmed', 'processing', 'completed', 'cancelled']),
@@ -74,6 +103,7 @@ export const stockAdjustmentSchema = z.object({
   variantId: z.string().uuid(),
   quantityChange: z.number().int().refine((val) => val !== 0, 'Change must not be zero'),
   reason: z.string().min(3, 'Adjustment reason is required'),
+  notes: z.string().optional(),
 });
 
 export const productCreateSchema = z.object({
@@ -82,15 +112,18 @@ export const productCreateSchema = z.object({
   sku: z.string().min(3).optional().or(z.literal('')),
   description: z.string().min(10, 'Description is required'),
   shortDescription: z.string().optional().or(z.literal('')),
-  brand: z.string().default('FashionHub'),
+  brand: z.string().default('VORQUEN'),
   categoryId: z.string().uuid('Valid category required'),
   audience: z.enum(['men', 'women', 'unisex', 'accessories']),
   fabric: z.string().optional().or(z.literal('')),
   careInstructions: z.string().optional().or(z.literal('')),
+  weight: z.number().positive().optional().nullable(),
+  model3dUrl: z.string().optional().nullable(),
   basePrice: z.number().positive('Base price must be positive'),
   salePrice: z.number().positive().optional().nullable(),
   costPrice: z.number().min(0, 'Cost price must be zero or positive'),
   taxCode: z.string().default('GST_12'),
+  status: z.enum(['active', 'draft', 'archived']).default('active'),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
   isNewArrival: z.boolean().default(false),
@@ -107,6 +140,7 @@ export const productCreateSchema = z.object({
   ).min(1, 'At least one product image is required'),
   variants: z.array(
     z.object({
+      id: z.string().optional(),
       sku: z.string().min(2),
       size: z.string().min(1),
       colour: z.string().min(2),
@@ -115,6 +149,29 @@ export const productCreateSchema = z.object({
       stockQuantity: z.number().int().min(0),
     })
   ).min(1, 'At least one variant is required'),
+});
+
+export const productUpdateSchema = productCreateSchema.partial().extend({
+  id: z.string().uuid('Product ID required'),
+});
+
+export const categoryCreateSchema = z.object({
+  name: z.string().min(2, 'Category name is required'),
+  slug: z.string().min(2).regex(/^[a-z0-9-]+$/, 'Slug must be lower-case alphanumeric with dashes'),
+  description: z.string().optional().or(z.literal('')),
+  imageUrl: z.string().optional().or(z.literal('')),
+  parentCategoryId: z.string().uuid().optional().nullable(),
+  isActive: z.boolean().default(true),
+  displayOrder: z.number().int().default(0),
+});
+
+export const categoryUpdateSchema = categoryCreateSchema.partial().extend({
+  id: z.string().uuid('Category ID required'),
+});
+
+export const reviewModerationSchema = z.object({
+  reviewId: z.string().uuid(),
+  status: z.enum(['approved', 'rejected', 'pending']),
 });
 
 export const returnRequestSchema = z.object({

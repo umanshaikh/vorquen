@@ -1,32 +1,46 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
-import { requireRole } from '@/lib/auth/session';
+import { requireAdmin } from '@/lib/auth/session';
 import { processReturnStatusUpdate } from '@/lib/services/returnsService';
 
 export async function GET() {
   try {
-    await requireRole(['admin', 'support']);
+    await requireAdmin();
     const returns = await prisma.returnRequest.findMany({
       include: {
-        order: { select: { orderNumber: true, totalAmount: true } },
-        user: { select: { fullName: true, email: true } },
-        items: {
-          include: {
-            orderItem: true,
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+            totalAmount: true,
+            paymentStatus: true,
+            payments: true,
           },
         },
+        user: { select: { fullName: true, email: true, phoneNumber: true } },
+        items: {
+          include: {
+            orderItem: {
+              include: {
+                product: { select: { name: true } },
+              },
+            },
+          },
+        },
+        refunds: true,
       },
       orderBy: { requestedAt: 'desc' },
     });
     return NextResponse.json({ success: true, returns });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 403 });
+    const isAuth = err.message?.includes('UNAUTHORIZED');
+    return NextResponse.json({ error: err.message }, { status: isAuth ? 401 : 403 });
   }
 }
 
 export async function PATCH(req: Request) {
   try {
-    const user = await requireRole(['admin', 'support']);
+    const admin = await requireAdmin();
     const body = await req.json();
     const { returnRequestId, newStatus, actionNotes } = body;
 
@@ -34,11 +48,26 @@ export async function PATCH(req: Request) {
       returnRequestId,
       newStatus,
       actionNotes,
-      user.id
+      admin.id
     );
+
+    await prisma.auditLog.create({
+      data: {
+        actorUserId: admin.id,
+        action: 'RETURN_STATUS_UPDATED',
+        entityType: 'return_request',
+        entityId: returnRequestId,
+        safeMetadata: JSON.stringify({
+          newStatus,
+          notes: actionNotes,
+          updatedBy: admin.email,
+        }),
+      },
+    });
 
     return NextResponse.json({ success: true, returnRequest: updated });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 });
+    const isAuth = err.message?.includes('UNAUTHORIZED');
+    return NextResponse.json({ error: err.message }, { status: isAuth ? 401 : 400 });
   }
 }

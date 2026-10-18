@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/db/prisma';
 import { registerSchema } from '@/lib/validation';
-import { signSessionToken } from '@/lib/auth/session';
+import { signSessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/auth/session';
 
 export async function POST(req: Request) {
   try {
@@ -47,6 +47,13 @@ export async function POST(req: Request) {
       user: sessionPayload,
     });
 
+    response.cookies.set(CUSTOMER_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 3600,
+    });
     response.cookies.set('fashionhub_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

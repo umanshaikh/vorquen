@@ -2,17 +2,19 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, Tag } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 export default function CartDrawer() {
+  const pathname = usePathname();
   const { cart, totals, isOpen, closeCart, updateQuantity, removeItem, applyCoupon, removeCoupon } = useCart();
   const [couponInput, setCouponInput] = useState('');
   const [couponFeedback, setCouponFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [applying, setApplying] = useState(false);
 
-  if (!isOpen) return null;
+  if (!isOpen || pathname?.startsWith('/admin')) return null;
 
   const items = cart?.items || [];
   const subtotal = totals?.subtotal || 0;
