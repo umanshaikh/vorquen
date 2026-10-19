@@ -35,6 +35,18 @@ export async function POST(req: Request) {
       customerNotes,
     });
 
+    // If COD, trigger order confirmation email immediately
+    if (paymentMethod === 'cod') {
+      import('@/lib/services/emailService').then(({ sendOrderConfirmationEmail }) => {
+        sendOrderConfirmationEmail({
+          orderNumber: result.order.orderNumber,
+          customerEmail: email,
+          totalAmount: result.order.totalAmount,
+          shippingAddressSnapshot: JSON.stringify(validatedAddress),
+        }).catch((e) => console.error('[COD EMAIL ERROR]', e));
+      });
+    }
+
     return NextResponse.json({
       success: true,
       order: {

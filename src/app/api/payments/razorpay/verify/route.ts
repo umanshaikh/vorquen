@@ -11,7 +11,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'orderId is required' }, { status: 400 });
     }
 
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    });
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
@@ -78,6 +81,17 @@ export async function POST(req: Request) {
           paidAt: new Date(),
         },
       });
+    });
+
+    // Send order confirmation email asynchronously
+    import('@/lib/services/emailService').then(({ sendOrderConfirmationEmail }) => {
+      sendOrderConfirmationEmail({
+        orderNumber: order.orderNumber,
+        customerEmail: order.customerEmail,
+        totalAmount: order.totalAmount,
+        items: order.items,
+        shippingAddressSnapshot: order.shippingAddressSnapshot,
+      }).catch((e) => console.error('[PAID EMAIL ERROR]', e));
     });
 
     return NextResponse.json({ success: true });

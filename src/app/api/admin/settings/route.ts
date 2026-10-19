@@ -24,6 +24,9 @@ export async function GET() {
       process.env.SHIPROCKET_API_EMAIL && process.env.SHIPROCKET_API_PASSWORD
     );
 
+    const { getEmailProviderInfo } = await import('@/lib/services/emailService');
+    const emailInfo = getEmailProviderInfo();
+
     return NextResponse.json({
       success: true,
       settings: settings || {
@@ -42,6 +45,12 @@ export async function GET() {
         isStrictlyEnforced: Boolean(process.env.VORQUEN_OWNER_EMAIL),
       },
       integrations: {
+        email: {
+          configured: emailInfo.isConfigured,
+          provider: emailInfo.provider,
+          mode: emailInfo.details,
+          from: emailInfo.fromEmail,
+        },
         razorpay: {
           configured: razorpayConfigured,
           mode: razorpayConfigured ? (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_test_') ? 'Test Sandbox' : 'Live Production') : 'Unconfigured (Mock Sandbox Active)',

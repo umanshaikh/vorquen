@@ -70,6 +70,24 @@ export async function POST(req: Request) {
             ...(validated.status === 'Delivered' && { deliveredAt: new Date() }),
           },
         });
+
+        if (validated.status === 'Delivered') {
+          prisma.shipment
+            .findUnique({
+              where: { id: validated.shipmentId },
+              include: { order: true },
+            })
+            .then((sh) => {
+              if (sh?.order) {
+                import('@/lib/services/emailService').then(({ sendOrderDeliveredEmail }) => {
+                  sendOrderDeliveredEmail({
+                    orderNumber: sh.order.orderNumber,
+                    customerEmail: sh.order.customerEmail,
+                  }).catch((e) => console.error('[DELIVERED EMAIL ERROR]', e));
+                });
+              }
+            });
+        }
       }
 
       await prisma.auditLog.create({
@@ -141,6 +159,18 @@ export async function POST(req: Request) {
       });
 
       return s;
+    });
+
+    // Send dispatch notification email
+    prisma.order.findUnique({ where: { id: validated.orderId } }).then((order) => {
+      if (order) {
+        import('@/lib/services/emailService').then(({ sendOrderDispatchedEmail }) => {
+          sendOrderDispatchedEmail(
+            { orderNumber: order.orderNumber, customerEmail: order.customerEmail },
+            { courierName: shipment.courierName, awbNumber: shipment.awbNumber, trackingUrl: shipment.trackingUrl }
+          ).catch((e) => console.error('[DISPATCH EMAIL ERROR]', e));
+        });
+      }
     });
 
     return NextResponse.json({ success: true, shipment });

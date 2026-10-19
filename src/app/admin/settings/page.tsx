@@ -12,6 +12,8 @@ import {
   History,
   Lock,
   ExternalLink,
+  Mail,
+  Send,
 } from 'lucide-react';
 
 export default function AdminSettingsPage() {
@@ -36,6 +38,10 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState('');
+
+  const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -104,6 +110,37 @@ export default function AdminSettingsPage() {
       setSaveError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSendTestEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSendingTestEmail(true);
+    setTestEmailResult(null);
+
+    try {
+      const res = await fetch('/api/admin/settings/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toEmail: testEmailAddress || ownerInfo?.currentLoggedInEmail,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to dispatch test email');
+
+      setTestEmailResult({
+        success: true,
+        message: data.message || `Test email dispatched via ${data.provider}`,
+      });
+    } catch (err: any) {
+      setTestEmailResult({
+        success: false,
+        message: err.message || 'Error dispatching diagnostic email',
+      });
+    } finally {
+      setSendingTestEmail(false);
     }
   };
 
@@ -349,6 +386,67 @@ export default function AdminSettingsPage() {
               Operational Status:{' '}
               <span className="font-medium text-stone-900">{integrations?.shiprocket?.mode}</span>
             </p>
+          </div>
+
+          {/* Email Engine Card */}
+          <div className="p-4 border border-stone-200 rounded bg-stone-50/50 md:col-span-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 font-bold text-stone-900">
+                <Mail size={16} className="text-stone-700" />
+                <span>Transactional Email Service</span>
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                  integrations?.email?.configured
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-amber-100 text-amber-800'
+                }`}
+              >
+                {integrations?.email?.configured ? 'Active Provider' : 'Development Mock'}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-stone-600 mb-3">
+              <p>
+                Active Engine:{' '}
+                <span className="font-medium text-stone-900">{integrations?.email?.mode || 'Detecting...'}</span>
+              </p>
+              <p>
+                Sender Address:{' '}
+                <span className="font-medium text-stone-900">{integrations?.email?.from || 'concierge@vorquen.com'}</span>
+              </p>
+            </div>
+
+            {/* Test Email Form */}
+            <form onSubmit={handleSendTestEmail} className="pt-3 border-t border-stone-200/80 flex flex-col sm:flex-row gap-2 items-center">
+              <input
+                type="email"
+                placeholder={ownerInfo?.currentLoggedInEmail || 'owner@vorquen.com'}
+                value={testEmailAddress}
+                onChange={(e) => setTestEmailAddress(e.target.value)}
+                className="w-full sm:flex-1 p-2 border border-stone-300 rounded text-xs focus:border-stone-900 focus:outline-none bg-white"
+              />
+              <button
+                type="submit"
+                disabled={sendingTestEmail}
+                className="w-full sm:w-auto px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded text-xs font-semibold flex items-center justify-center gap-1.5 transition disabled:opacity-50 whitespace-nowrap"
+              >
+                <Send size={13} />
+                <span>{sendingTestEmail ? 'Sending...' : 'Send Test Email'}</span>
+              </button>
+            </form>
+
+            {testEmailResult && (
+              <div
+                className={`mt-2 p-2 rounded text-xs flex items-center gap-2 ${
+                  testEmailResult.success
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
+                {testEmailResult.success ? <Check size={14} /> : <AlertCircle size={14} />}
+                <span>{testEmailResult.message}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -124,6 +124,14 @@ export async function processReturnStatusUpdate(
           where: { id: returnReq.orderId },
           data: { paymentStatus: 'refunded' },
         });
+
+        // Send refund processed email
+        import('./emailService').then(({ sendRefundProcessedEmail }) => {
+          sendRefundProcessedEmail(
+            { orderNumber: returnReq.order.orderNumber, customerEmail: returnReq.order.customerEmail },
+            { amount: refundAmount, refundReference: `REF-${returnReq.id.slice(0, 8).toUpperCase()}` }
+          ).catch((e) => console.error('[REFUND EMAIL ERROR]', e));
+        });
       }
     }
 
