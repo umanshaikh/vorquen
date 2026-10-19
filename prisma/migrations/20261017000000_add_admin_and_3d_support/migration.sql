@@ -41,7 +41,8 @@ ALTER TABLE "orders" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "order_items" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "payments" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "shipments" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "returns" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "return_requests" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "return_items" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "refunds" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "audit_logs" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "products" ENABLE ROW LEVEL SECURITY;
@@ -49,7 +50,7 @@ ALTER TABLE "product_variants" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "categories" ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to check if current user is store owner or administrator
-CREATE OR REPLACE FUNCTION auth.is_store_owner()
+CREATE OR REPLACE FUNCTION public.is_store_owner()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
@@ -65,43 +66,43 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 DROP POLICY IF EXISTS "Users can view own profile or owners view all" ON "profiles";
 CREATE POLICY "Users can view own profile or owners view all"
   ON "profiles" FOR SELECT
-  USING (auth.uid() = id OR auth.is_store_owner());
+  USING (auth.uid() = id OR public.is_store_owner());
 
 DROP POLICY IF EXISTS "Users can update own profile" ON "profiles";
 CREATE POLICY "Users can update own profile"
   ON "profiles" FOR UPDATE
-  USING (auth.uid() = id OR auth.is_store_owner());
+  USING (auth.uid() = id OR public.is_store_owner());
 
 -- Addresses Policies: Restricted to owning customer or store owner for fulfillment
 DROP POLICY IF EXISTS "Addresses access restriction" ON "addresses";
 CREATE POLICY "Addresses access restriction"
   ON "addresses" FOR ALL
-  USING (auth.uid() = user_id OR auth.is_store_owner());
+  USING (auth.uid() = user_id OR public.is_store_owner());
 
 -- Products Policies: Public read for published active products; Owner-only for mutation & drafts
 DROP POLICY IF EXISTS "Public can view active products" ON "products";
 CREATE POLICY "Public can view active products"
   ON "products" FOR SELECT
-  USING ((is_active = true AND status = 'active' AND archived_at IS NULL) OR auth.is_store_owner());
+  USING ((is_active = true AND status = 'active' AND archived_at IS NULL) OR public.is_store_owner());
 
 DROP POLICY IF EXISTS "Owners can manage products" ON "products";
 CREATE POLICY "Owners can manage products"
   ON "products" FOR ALL
-  USING (auth.is_store_owner());
+  USING (public.is_store_owner());
 
 -- Orders Policies: Customers view their own orders; Owner views and updates all
 DROP POLICY IF EXISTS "Customer order visibility" ON "orders";
 CREATE POLICY "Customer order visibility"
   ON "orders" FOR SELECT
-  USING (auth.uid() = user_id OR auth.is_store_owner());
+  USING (auth.uid() = user_id OR public.is_store_owner());
 
 DROP POLICY IF EXISTS "Owner order management" ON "orders";
 CREATE POLICY "Owner order management"
   ON "orders" FOR ALL
-  USING (auth.is_store_owner());
+  USING (public.is_store_owner());
 
 -- Audit Logs Policies: Owner only
 DROP POLICY IF EXISTS "Owner only audit access" ON "audit_logs";
 CREATE POLICY "Owner only audit access"
   ON "audit_logs" FOR SELECT
-  USING (auth.is_store_owner());
+  USING (public.is_store_owner());
