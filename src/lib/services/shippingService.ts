@@ -136,7 +136,8 @@ export class ManualShippingAdapter implements IShippingProvider {
     const randomSuffix = Math.floor(10000000 + Math.random() * 90000000);
     const courier = params.courierName || 'Blue Dart Express';
     const awb = params.manualAwb || `${courier.slice(0, 3).toUpperCase()}-${randomSuffix}`;
-    const trackingUrl = params.manualTrackingUrl || `https://track.fashionhub.in/?awb=${awb}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const trackingUrl = params.manualTrackingUrl || `${appUrl}/track-order?awb=${awb}`;
 
     return {
       awbNumber: awb,
