@@ -9,6 +9,8 @@
     "dev:admin": "pnpm --filter vorquen-admin web",
     "start:storefront": "pnpm --filter vorquen-storefront start",
     "start:admin": "pnpm --filter vorquen-admin start",
+    "build:storefront": "pnpm --filter vorquen-storefront build",
+    "build:admin": "pnpm --filter vorquen-admin build",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
