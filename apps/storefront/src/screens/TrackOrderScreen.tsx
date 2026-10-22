@@ -97,7 +97,7 @@ export default function TrackOrderScreen({
         <View style={styles.card}>
           <Text style={styles.notFoundTitle}>Order Not Found</Text>
           <Text style={styles.notFoundDesc}>
-            No requisition matching &ldquo;{orderNumber}&rdquo; was found in our atelier records.
+            No requisition matching "{orderNumber}" was found in our atelier records.
           </Text>
         </View>
       )}
@@ -119,7 +119,7 @@ export default function TrackOrderScreen({
             <View style={styles.milestone}>
               <View style={[styles.dot, styles.dotActive]} />
               <View style={styles.milestoneInfo}>
-                <Text style={styles.milestoneTitle}>Requisition Received &amp; Verified</Text>
+                <Text style={styles.milestoneTitle}>Requisition Received & Verified</Text>
                 <Text style={styles.milestoneSub}>Order registered in atelier database.</Text>
               </View>
             </View>
@@ -134,7 +134,7 @@ export default function TrackOrderScreen({
                 ]}
               />
               <View style={styles.milestoneInfo}>
-                <Text style={styles.milestoneTitle}>Garment Inspection &amp; Preparation</Text>
+                <Text style={styles.milestoneTitle}>Garment Inspection & Preparation</Text>
                 <Text style={styles.milestoneSub}>Silhouettes inspected and packed with security seals.</Text>
               </View>
             </View>
@@ -150,7 +150,7 @@ export default function TrackOrderScreen({
                 <Text style={styles.milestoneTitle}>Dispatched with Logistics Courier</Text>
                 <Text style={styles.milestoneSub}>
                   {order.shipments?.[0]?.courier_name
-                    ? `${order.shipments[0].courier_name} &bull; AWB: ${order.shipments[0].awb_number}`
+                    ? `${order.shipments[0].courier_name} • AWB: ${order.shipments[0].awb_number}`
                     : 'Awaiting courier airway bill generation.'}
                 </Text>
               </View>
@@ -160,7 +160,7 @@ export default function TrackOrderScreen({
       )}
 
       <TouchableOpacity style={styles.continueBtn} onPress={onContinueShopping}>
-        <Text style={styles.continueBtnText}>&larr; CONTINUE BROWSING ATELIER</Text>
+        <Text style={styles.continueBtnText}>← CONTINUE BROWSING ATELIER</Text>
       </TouchableOpacity>
     </ScrollView>
   );
