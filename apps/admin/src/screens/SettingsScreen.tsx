@@ -52,8 +52,8 @@ export default function SettingsScreen({ onLogout }: SettingsScreenProps) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>System Architecture &amp; Settings</Text>
-        <Text style={styles.subtitle}>Production Infrastructure &amp; Independent Domain Deployment</Text>
+        <Text style={styles.title}>System Architecture & Settings</Text>
+        <Text style={styles.subtitle}>Production Infrastructure & Independent Domain Deployment</Text>
       </View>
 
       {/* 1. Independent Domain Architecture (No Subdomain) */}
@@ -101,22 +101,17 @@ export default function SettingsScreen({ onLogout }: SettingsScreenProps) {
 
         <View style={styles.diagRow}>
           <Text style={styles.diagName}>Cashfree Payment Gateway</Text>
-          <Text style={styles.diagStatusGold}>CONFIGURED (UPI / NETBANKING / CARDS)</Text>
-        </View>
-
-        <View style={styles.diagRow}>
-          <Text style={styles.diagName}>Razorpay Payment Gateway</Text>
-          <Text style={styles.diagStatusGold}>CONFIGURED (CARDS / UPI / EMI)</Text>
+          <Text style={styles.diagStatusGold}>TEST / SANDBOX CONDITION ACTIVE</Text>
         </View>
 
         <View style={styles.diagRow}>
           <Text style={styles.diagName}>Shiprocket Logistics Aggregator</Text>
-          <Text style={styles.diagStatusGold}>DIRECT / SHIPROCKET DISPATCH READY</Text>
+          <Text style={styles.diagStatusGold}>TEST / SANDBOX CONDITION ACTIVE</Text>
         </View>
 
         <View style={styles.diagRow}>
           <Text style={styles.diagName}>Transactional Email Service</Text>
-          <Text style={styles.diagStatusGold}>RESEND &amp; SMTP ENGINES ACTIVE</Text>
+          <Text style={styles.diagStatusGold}>RESEND & SMTP ENGINES ACTIVE</Text>
         </View>
       </View>
 

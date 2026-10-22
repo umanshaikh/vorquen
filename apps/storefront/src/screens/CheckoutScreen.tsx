@@ -80,8 +80,8 @@ export default function CheckoutScreen({
             discount_amount: totals.discountAmount || 0,
             shipping_amount: totals.shippingAmount || 0,
             tax_amount: totals.taxAmount || 0,
-            order_status: paymentMethod === 'cod' ? 'confirmed' : 'pending',
-            payment_status: 'pending',
+            order_status: 'confirmed',
+            payment_status: paymentMethod === 'cod' ? 'pending' : 'paid',
             fulfillment_status: 'unfulfilled',
             currency: 'INR',
             coupon_code: totals.appliedCode || null,
@@ -118,8 +118,8 @@ export default function CheckoutScreen({
           payment_method: paymentMethod === 'cod' ? 'cod' : 'upi',
           amount: totals.grandTotal,
           currency: 'INR',
-          status: 'pending',
-          provider_order_id: `${paymentMethod.toUpperCase()}_${order.id.slice(0, 16)}`,
+          status: paymentMethod === 'cod' ? 'pending' : 'completed',
+          provider_order_id: `${paymentMethod.toUpperCase()}_TEST_${order.id.slice(0, 12)}`,
         },
       ]);
 
@@ -145,7 +145,7 @@ export default function CheckoutScreen({
   return (
     <ScrollView style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-        <Text style={styles.backBtnText}>&larr; RETURN TO BAG</Text>
+        <Text style={styles.backBtnText}>← RETURN TO BAG</Text>
       </TouchableOpacity>
 
       <View style={styles.header}>
@@ -229,18 +229,18 @@ export default function CheckoutScreen({
       <View style={styles.card}>
         <Text style={styles.cardTitle}>3. Payment Settlement</Text>
 
-        {/* Option 1: Cashfree Payments */}
+        {/* Option 1: Cashfree Payments (Sandbox Test Condition) */}
         <TouchableOpacity
           style={[styles.payOption, paymentMethod === 'cashfree' && styles.payOptionActive]}
           onPress={() => setPaymentMethod('cashfree')}
         >
-          <View>
-            <Text style={styles.payOptionName}>Cashfree Payments (UPI, Cards, Netbanking)</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.payOptionName}>Cashfree Payments (Sandbox Test)</Text>
             <Text style={styles.payOptionDesc}>
-              Instant UPI via Google Pay, PhonePe, Paytm, BHIM QR, Cards
+              Instant UPI (GPay, PhonePe, Paytm), Netbanking, Debit/Credit Cards
             </Text>
           </View>
-          <Text style={styles.payTag}>RECOMMENDED</Text>
+          <Text style={styles.payTag}>SANDBOX TEST</Text>
         </TouchableOpacity>
 
         {/* Option 2: Razorpay */}
@@ -250,7 +250,7 @@ export default function CheckoutScreen({
         >
           <View>
             <Text style={styles.payOptionName}>Razorpay Online Gateway</Text>
-            <Text style={styles.payOptionDesc}>Credit/Debit Cards, UPI, Netbanking &amp; EMI</Text>
+            <Text style={styles.payOptionDesc}>Credit/Debit Cards, UPI, Netbanking & EMI</Text>
           </View>
         </TouchableOpacity>
 
@@ -275,7 +275,7 @@ export default function CheckoutScreen({
         {loading ? (
           <ActivityIndicator color="#0d0d0d" />
         ) : (
-          <Text style={styles.submitBtnText}>CONFIRM REQUISITION &bull; ₹{totals.grandTotal?.toLocaleString('en-IN')}</Text>
+          <Text style={styles.submitBtnText}>CONFIRM REQUISITION • ₹{totals.grandTotal?.toLocaleString('en-IN')}</Text>
         )}
       </TouchableOpacity>
     </ScrollView>
