@@ -20,6 +20,12 @@ export async function GET() {
       !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID.startsWith('your_')
     );
 
+    const cashfreeConfigured = Boolean(
+      process.env.CASHFREE_APP_ID &&
+      process.env.CASHFREE_SECRET_KEY &&
+      !process.env.CASHFREE_APP_ID.startsWith('your_')
+    );
+
     const shiprocketConfigured = Boolean(
       process.env.SHIPROCKET_API_EMAIL && process.env.SHIPROCKET_API_PASSWORD
     );
@@ -51,9 +57,13 @@ export async function GET() {
           mode: emailInfo.details,
           from: emailInfo.fromEmail,
         },
+        cashfree: {
+          configured: cashfreeConfigured,
+          mode: cashfreeConfigured ? (process.env.NEXT_PUBLIC_CASHFREE_ENV === 'PRODUCTION' ? 'Live Production PG' : 'Sandbox Test PG') : 'Unconfigured (Requires App ID & Secret Key)',
+        },
         razorpay: {
           configured: razorpayConfigured,
-          mode: razorpayConfigured ? (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_test_') ? 'Test Sandbox' : 'Live Production') : 'Unconfigured (Mock Sandbox Active)',
+          mode: razorpayConfigured ? (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith('rzp_test_') ? 'Test Sandbox' : 'Live Production') : 'Unconfigured (Requires Key ID & Secret Key)',
         },
         shiprocket: {
           configured: shiprocketConfigured,

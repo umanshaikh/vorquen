@@ -192,9 +192,9 @@ export default function AdminPaymentsPage() {
           className="px-3 py-1.5 bg-stone-50 border border-stone-300 rounded-md focus:outline-none uppercase font-mono"
         >
           <option value="all">All Providers</option>
+          <option value="cashfree">Cashfree Gateway</option>
           <option value="razorpay">Razorpay Gateway</option>
           <option value="cod">Cash on Delivery</option>
-          <option value="mock_test">Mock Test Adapter</option>
         </select>
       </div>
 

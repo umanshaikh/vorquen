@@ -21,7 +21,7 @@ export default function CheckoutPage() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [postalCode, setPostalCode] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod' | 'mock_test'>('mock_test');
+  const [paymentMethod, setPaymentMethod] = useState<'cashfree' | 'razorpay' | 'cod'>('cashfree');
   const [customerNotes, setCustomerNotes] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [couponMsg, setCouponMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -112,14 +112,50 @@ export default function CheckoutPage() {
         throw new Error(data.error || 'Failed to place order');
       }
 
-      // If Razorpay online payment
-      if (paymentMethod === 'razorpay' && data.paymentDetails?.keyId && !data.paymentDetails?.isTestMode) {
-        // Live Razorpay Checkout SDK launch
+      // Helper to dynamically load external gateway scripts
+      const loadScript = (src: string) => {
+        return new Promise((resolve, reject) => {
+          if (document.querySelector(`script[src="${src}"]`)) return resolve(true);
+          const script = document.createElement('script');
+          script.src = src;
+          script.onload = () => resolve(true);
+          script.onerror = () => reject(new Error(`Failed to load payment gateway SDK: ${src}`));
+          document.body.appendChild(script);
+        });
+      };
+
+      // 1. If Cashfree online payment
+      if (paymentMethod === 'cashfree') {
+        if (!data.paymentDetails?.paymentSessionId) {
+          throw new Error('Cashfree payment session was not generated. Please verify API credentials.');
+        }
+
+        await loadScript('https://sdk.cashfree.com/js/v3/cashfree.js');
+        const isProd = process.env.NEXT_PUBLIC_CASHFREE_ENV === 'PRODUCTION';
+        const cashfree = (window as any).Cashfree({
+          mode: isProd ? 'production' : 'sandbox',
+        });
+
+        cashfree.checkout({
+          paymentSessionId: data.paymentDetails.paymentSessionId,
+          redirectTarget: '_self',
+        });
+        return;
+      }
+
+      // 2. If Razorpay online payment
+      if (paymentMethod === 'razorpay') {
+        if (!data.paymentDetails?.keyId) {
+          throw new Error('Razorpay Key ID is missing. Please verify credentials in settings.');
+        }
+
+        await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+
         const options = {
           key: data.paymentDetails.keyId,
-          amount: data.paymentDetails.amount * 100,
+          amount: Math.round(data.paymentDetails.amount * 100),
           currency: 'INR',
-          name: 'FashionHub Atelier',
+          name: 'VORQUEN Atelier',
           description: `Order ${data.order.orderNumber}`,
           order_id: data.paymentDetails.providerOrderId,
           handler: async function (response: any) {
@@ -137,7 +173,7 @@ export default function CheckoutPage() {
               await refreshCart();
               router.push(`/order-confirmation/${data.order.orderNumber}`);
             } else {
-              alert('Payment verification failed on the server. Please contact support.');
+              alert('Payment verification failed on the server. Please contact concierge support.');
             }
           },
           prefill: {
@@ -145,7 +181,7 @@ export default function CheckoutPage() {
             email: customerEmail,
             contact: phoneNumber,
           },
-          theme: { color: '#1c1917' },
+          theme: { color: '#0d0d0d' },
         };
 
         const rzp = new (window as any).Razorpay(options);
@@ -153,21 +189,12 @@ export default function CheckoutPage() {
         return;
       }
 
-      // If sandbox mock test or COD
-      if (paymentMethod === 'mock_test') {
-        // Call verification with test mode flag
-        await fetch('/api/payments/razorpay/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId: data.order.id,
-            isMockTest: true,
-          }),
-        });
+      // 3. If Cash on Delivery (COD)
+      if (paymentMethod === 'cod') {
+        await refreshCart();
+        router.push(`/order-confirmation/${data.order.orderNumber}`);
+        return;
       }
-
-      await refreshCart();
-      router.push(`/order-confirmation/${data.order.orderNumber}`);
     } catch (err: any) {
       setErrorMsg(err.message || 'An error occurred during checkout');
     } finally {
@@ -338,10 +365,10 @@ export default function CheckoutPage() {
             </h2>
 
             <div className="space-y-3">
-              {/* Option 1: Sandbox Instant Test */}
+              {/* Option 1: Cashfree Payments */}
               <label
                 className={`p-4 border rounded cursor-pointer flex items-center justify-between transition ${
-                  paymentMethod === 'mock_test'
+                  paymentMethod === 'cashfree'
                     ? 'border-stone-900 bg-sand-100/60 ring-1 ring-stone-900'
                     : 'border-stone-200 bg-white hover:border-stone-400'
                 }`}
@@ -350,19 +377,22 @@ export default function CheckoutPage() {
                   <input
                     type="radio"
                     name="paymentMethod"
-                    checked={paymentMethod === 'mock_test'}
-                    onChange={() => setPaymentMethod('mock_test')}
+                    checked={paymentMethod === 'cashfree'}
+                    onChange={() => setPaymentMethod('cashfree')}
                     className="text-stone-900 focus:ring-stone-800"
                   />
                   <div>
-                    <span className="text-xs font-bold text-stone-900 block">Instant Sandbox Demo (Test Mode)</span>
+                    <span className="text-xs font-bold text-stone-900 block flex items-center gap-2">
+                      <CreditCard size={15} />
+                      <span>Cashfree Payments (UPI, Cards, Netbanking)</span>
+                    </span>
                     <span className="text-[11px] text-stone-500">
-                      Simulates instantaneous verified prepaid order creation without requiring live bank credentials
+                      Google Pay, PhonePe, Paytm, BHIM UPI QR, Debit/Credit Cards & Netbanking
                     </span>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded">
-                  Recommended for Dev
+                <span className="text-[10px] font-bold px-2 py-0.5 bg-stone-900 text-white rounded">
+                  Instant UPI
                 </span>
               </label>
 
@@ -388,7 +418,7 @@ export default function CheckoutPage() {
                       <span>Razorpay Online Payments</span>
                     </span>
                     <span className="text-[11px] text-stone-500">
-                      UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, Netbanking
+                      Credit/Debit Cards, UPI, Netbanking & EMI
                     </span>
                   </div>
                 </div>

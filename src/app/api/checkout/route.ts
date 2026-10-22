@@ -11,6 +11,7 @@ export async function POST(req: Request) {
     const { cartId, customerEmail, customerPhone, shippingAddress, billingAddress, paymentMethod, couponCode, customerNotes } = body;
 
     const validatedAddress = checkoutSchema.shape.shippingAddress.parse(shippingAddress);
+    const validatedPaymentMethod = checkoutSchema.shape.paymentMethod.parse(paymentMethod);
 
     if (!cartId) {
       return NextResponse.json({ error: 'cartId is required' }, { status: 400 });
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
       customerPhone: phone,
       shippingAddress: validatedAddress,
       billingAddress: billingAddress || null,
-      paymentMethod,
+      paymentMethod: validatedPaymentMethod,
       couponCode,
       customerNotes,
     });

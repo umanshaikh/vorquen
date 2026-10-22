@@ -19,9 +19,9 @@ export default function ContactPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-10">
       <div className="text-center space-y-2">
         <span className="text-xs font-bold uppercase tracking-widest text-stone-500">Concierge Desk</span>
-        <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">Contact FashionHub</h1>
+        <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">Contact VORQUEN Atelier</h1>
         <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto">
-          Our client support and styling concierge team is ready to assist you.
+          Our client relations and haute couture concierge team is ready to assist you.
         </p>
       </div>
 
@@ -31,7 +31,7 @@ export default function ContactPage() {
           <div className="p-5 bg-white border border-stone-200/80 rounded-sm space-y-2">
             <Mail size={18} className="text-stone-800" />
             <h4 className="font-bold text-xs text-stone-900 uppercase tracking-wider">Email Us</h4>
-            <p className="text-xs text-stone-600">support@fashionhub.in</p>
+            <p className="text-xs text-stone-600">concierge@vorquen.com</p>
             <p className="text-[11px] text-stone-400">Response within 12–24 business hours</p>
           </div>
 

@@ -54,7 +54,7 @@ export const updateCartItemSchema = z.object({
 export const checkoutSchema = z.object({
   shippingAddress: addressSchema,
   billingAddress: addressSchema.optional().nullable(),
-  paymentMethod: z.enum(['razorpay', 'cod', 'mock_test']),
+  paymentMethod: z.enum(['cashfree', 'razorpay', 'cod']),
   couponCode: z.string().optional().nullable(),
   customerNotes: z.string().max(500).optional().nullable(),
 });

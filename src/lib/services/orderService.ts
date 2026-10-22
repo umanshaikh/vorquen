@@ -11,7 +11,7 @@ export interface CheckoutParams {
   customerPhone: string;
   shippingAddress: AddressSnapshot;
   billingAddress?: AddressSnapshot | null;
-  paymentMethod: 'razorpay' | 'cod' | 'mock_test';
+  paymentMethod: 'cashfree' | 'razorpay' | 'cod';
   couponCode?: string | null;
   customerNotes?: string | null;
 }
@@ -19,7 +19,7 @@ export interface CheckoutParams {
 export function generateOrderNumber(): string {
   const year = new Date().getFullYear();
   const randomSuffix = Math.floor(10000 + Math.random() * 90000);
-  return `FH-${year}-${randomSuffix}`;
+  return `VQ-${year}-${randomSuffix}`;
 }
 
 export const VALID_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
@@ -174,7 +174,13 @@ export async function createOrderFromCart(params: CheckoutParams) {
   const paymentDetails = await paymentProvider.createPaymentOrder(
     createdOrder.id,
     createdOrder.totalAmount,
-    'INR'
+    'INR',
+    {
+      customerEmail,
+      customerPhone,
+      customerName: shippingAddress.recipientName,
+      orderNumber: createdOrder.orderNumber,
+    }
   );
 
   return {

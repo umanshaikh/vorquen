@@ -163,18 +163,8 @@ function AdminLoginForm() {
               </div>
             )}
 
-            {/* Quick Fill & Forgot Password */}
-            <div className="flex justify-between items-center text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('owner@vorquen.com');
-                  setPassword('Admin@123');
-                }}
-                className="text-[11px] text-amber-400 hover:text-amber-300 font-mono underline flex items-center gap-1"
-              >
-                <span>⚡ Quick Fill Owner Login</span>
-              </button>
+            {/* Forgot Password */}
+            <div className="flex justify-end items-center text-xs">
               <Link
                 href="/admin/forgot-password"
                 className="text-[11px] text-stone-400 hover:text-stone-200 transition"

@@ -344,6 +344,30 @@ export default function AdminSettingsPage() {
           Gateway &amp; Logistics Integrations Diagnostics
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          {/* Cashfree PG */}
+          <div className="p-4 border border-stone-200 rounded bg-stone-50/50">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 font-bold text-stone-900">
+                <CreditCard size={16} className="text-stone-700" />
+                <span>Cashfree Payment Gateway</span>
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                  integrations?.cashfree?.configured
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-amber-100 text-amber-800'
+                }`}
+              >
+                {integrations?.cashfree?.configured ? 'Active' : 'Awaiting Keys'}
+              </span>
+            </div>
+            <p className="text-stone-600">
+              Operational Status:{' '}
+              <span className="font-medium text-stone-900">{integrations?.cashfree?.mode}</span>
+            </p>
+          </div>
+
+          {/* Razorpay PG */}
           <div className="p-4 border border-stone-200 rounded bg-stone-50/50">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 font-bold text-stone-900">
@@ -357,7 +381,7 @@ export default function AdminSettingsPage() {
                     : 'bg-amber-100 text-amber-800'
                 }`}
               >
-                {integrations?.razorpay?.configured ? 'Active' : 'Sandbox Ready'}
+                {integrations?.razorpay?.configured ? 'Active' : 'Awaiting Keys'}
               </span>
             </div>
             <p className="text-stone-600">

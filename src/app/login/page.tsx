@@ -41,22 +41,12 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickDemo = (role: 'admin' | 'customer') => {
-    if (role === 'admin') {
-      setEmail('admin@fashionhub.in');
-      setPassword('Admin@123');
-    } else {
-      setEmail('priya.sharma@example.com');
-      setPassword('Customer@123');
-    }
-  };
-
   return (
     <div className="max-w-md mx-auto px-4 py-16 sm:py-24">
       <div className="bg-white border border-stone-200/80 rounded-sm p-8 shadow-sm space-y-6">
         <div className="text-center space-y-1">
           <span className="font-serif text-2xl font-bold tracking-tight text-stone-900 block">
-            FASHION<span className="font-light italic text-stone-500">HUB</span>
+            VORQUEN
           </span>
           <h1 className="text-base font-bold uppercase tracking-wider text-stone-900">Sign in to your account</h1>
           <p className="text-xs text-stone-500">Access your order updates, wishlist, and returns</p>
@@ -110,26 +100,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Demo Fast Fill Buttons */}
-        <div className="pt-4 border-t border-stone-100 text-center space-y-2">
-          <span className="text-[10px] uppercase tracking-widest text-stone-400 block font-bold">Quick Demo Login</span>
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => handleQuickDemo('admin')}
-              className="px-3 py-1 bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-semibold rounded"
-            >
-              Demo Admin
-            </button>
-            <button
-              onClick={() => handleQuickDemo('customer')}
-              className="px-3 py-1 bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-semibold rounded"
-            >
-              Demo Customer
-            </button>
-          </div>
-        </div>
-
-        <div className="text-center text-xs text-stone-500 pt-2">
+        <div className="text-center text-xs text-stone-500 pt-2 border-t border-stone-100">
           Don&apos;t have an account?{' '}
           <Link href="/register" className="font-semibold text-stone-900 hover:underline">
             Register here

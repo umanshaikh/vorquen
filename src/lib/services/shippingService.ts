@@ -133,17 +133,20 @@ export class ShiprocketShippingAdapter implements IShippingProvider {
 
 export class ManualShippingAdapter implements IShippingProvider {
   async bookShipment(params: ShipmentBookingParams) {
-    const randomSuffix = Math.floor(10000000 + Math.random() * 90000000);
-    const courier = params.courierName || 'Blue Dart Express';
-    const awb = params.manualAwb || `${courier.slice(0, 3).toUpperCase()}-${randomSuffix}`;
+    if (!params.manualAwb || params.manualAwb.trim().length === 0) {
+      throw new Error('A valid courier Air Waybill (AWB) number is required for manual shipment entry.');
+    }
+
+    const courier = params.courierName?.trim() || 'Direct Luxury Courier';
+    const awb = params.manualAwb.trim();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const trackingUrl = params.manualTrackingUrl || `${appUrl}/track-order?awb=${awb}`;
+    const trackingUrl = params.manualTrackingUrl || `${appUrl}/track-order?awb=${encodeURIComponent(awb)}`;
 
     return {
       awbNumber: awb,
       courierName: courier,
       trackingUrl,
-      shippingCost: 75.0,
+      shippingCost: 0,
       providerShipmentId: `MANUAL_${Date.now()}`,
     };
   }

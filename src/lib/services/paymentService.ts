@@ -2,11 +2,29 @@ import crypto from 'crypto';
 import prisma from '../db/prisma';
 import { PaymentInitiationResult } from '../types';
 
-export interface IPaymentProvider {
-  createPaymentOrder(orderId: string, amount: number, currency: string): Promise<PaymentInitiationResult>;
-  verifyPayment(orderId: string, paymentDetails: any): Promise<{ isVerified: boolean; error?: string; providerPaymentId?: string }>;
+export interface PaymentOrderMetadata {
+  customerEmail?: string;
+  customerPhone?: string;
+  customerName?: string;
+  orderNumber?: string;
 }
 
+export interface IPaymentProvider {
+  createPaymentOrder(
+    orderId: string,
+    amount: number,
+    currency: string,
+    metadata?: PaymentOrderMetadata
+  ): Promise<PaymentInitiationResult>;
+  verifyPayment(
+    orderId: string,
+    paymentDetails: any
+  ): Promise<{ isVerified: boolean; error?: string; providerPaymentId?: string }>;
+}
+
+/**
+ * 1. Razorpay Payment Gateway Adapter (India)
+ */
 export class RazorpayPaymentAdapter implements IPaymentProvider {
   private keyId: string;
   private keySecret: string;
@@ -20,9 +38,16 @@ export class RazorpayPaymentAdapter implements IPaymentProvider {
     return Boolean(this.keyId && this.keySecret && !this.keyId.startsWith('your_'));
   }
 
-  async createPaymentOrder(orderId: string, amount: number, currency: string = 'INR'): Promise<PaymentInitiationResult> {
+  async createPaymentOrder(
+    orderId: string,
+    amount: number,
+    currency: string = 'INR',
+    metadata?: PaymentOrderMetadata
+  ): Promise<PaymentInitiationResult> {
     if (!this.isConfigured()) {
-      throw new Error('Razorpay API keys are not configured in environment variables');
+      throw new Error(
+        'Razorpay API credentials (NEXT_PUBLIC_RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET) are not configured.'
+      );
     }
 
     // Convert INR rupees to paise (integer minor units)
@@ -38,8 +63,11 @@ export class RazorpayPaymentAdapter implements IPaymentProvider {
       body: JSON.stringify({
         amount: amountInPaise,
         currency,
-        receipt: `receipt_${orderId.slice(0, 30)}`,
-        notes: { fashionhub_order_id: orderId },
+        receipt: `rcpt_${orderId.slice(0, 30)}`,
+        notes: {
+          vorquen_order_id: orderId,
+          order_number: metadata?.orderNumber || orderId,
+        },
       }),
     });
 
@@ -60,9 +88,12 @@ export class RazorpayPaymentAdapter implements IPaymentProvider {
     };
   }
 
-  async verifyPayment(orderId: string, paymentDetails: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
+  async verifyPayment(
+    orderId: string,
+    paymentDetails: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }
+  ) {
     if (!this.isConfigured()) {
-      return { isVerified: false, error: 'Razorpay keys not configured' };
+      return { isVerified: false, error: 'Razorpay credentials not configured' };
     }
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = paymentDetails;
@@ -100,41 +131,175 @@ export class RazorpayPaymentAdapter implements IPaymentProvider {
 }
 
 /**
- * Clearly labelled test adapter for local development without live Razorpay keys.
+ * 2. Cashfree Payment Gateway Adapter (India)
  */
-export class MockTestPaymentAdapter implements IPaymentProvider {
-  async createPaymentOrder(orderId: string, amount: number, currency: string = 'INR'): Promise<PaymentInitiationResult> {
-    console.info(`[PAYMENT TEST SANDBOX] Created mock payment intent for Order ${orderId}: ₹${amount}`);
+export class CashfreePaymentAdapter implements IPaymentProvider {
+  private appId: string;
+  private secretKey: string;
+  private apiVersion: string;
+  private baseUrl: string;
+
+  constructor() {
+    this.appId = process.env.CASHFREE_APP_ID || '';
+    this.secretKey = process.env.CASHFREE_SECRET_KEY || '';
+    this.apiVersion = process.env.CASHFREE_API_VERSION || '2023-08-01';
+    const env = (process.env.NEXT_PUBLIC_CASHFREE_ENV || 'SANDBOX').toUpperCase();
+    this.baseUrl = env === 'PRODUCTION' ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
+  }
+
+  isConfigured(): boolean {
+    return Boolean(this.appId && this.secretKey && !this.appId.startsWith('your_'));
+  }
+
+  async createPaymentOrder(
+    orderId: string,
+    amount: number,
+    currency: string = 'INR',
+    metadata?: PaymentOrderMetadata
+  ): Promise<PaymentInitiationResult> {
+    if (!this.isConfigured()) {
+      throw new Error(
+        'Cashfree API credentials (CASHFREE_APP_ID / CASHFREE_SECRET_KEY) are not configured in environment variables.'
+      );
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const customerPhone = metadata?.customerPhone?.replace(/\D/g, '').slice(-10) || '9999999999';
+
+    const orderPayload = {
+      order_id: orderId,
+      order_amount: Number(amount.toFixed(2)),
+      order_currency: currency,
+      customer_details: {
+        customer_id: `cust_${orderId.slice(0, 20)}`,
+        customer_email: metadata?.customerEmail || 'client@vorquen.com',
+        customer_phone: customerPhone.length === 10 ? customerPhone : '9999999999',
+        customer_name: metadata?.customerName || 'VORQUEN Client',
+      },
+      order_meta: {
+        return_url: `${appUrl}/api/payments/cashfree/verify?order_id={order_id}`,
+        notify_url: `${appUrl}/api/payments/cashfree/webhook`,
+      },
+      order_note: `VORQUEN Order ${metadata?.orderNumber || orderId}`,
+    };
+
+    const response = await fetch(`${this.baseUrl}/orders`, {
+      method: 'POST',
+      headers: {
+        'x-client-id': this.appId,
+        'x-client-secret': this.secretKey,
+        'x-api-version': this.apiVersion,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderPayload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Cashfree order creation failed: ${data.message || response.statusText}`);
+    }
+
     return {
-      provider: 'mock_test',
+      provider: 'cashfree',
       orderId,
       amount,
       currency,
-      providerOrderId: `mock_order_${Date.now()}`,
-      isTestMode: true,
+      providerOrderId: data.order_id,
+      paymentSessionId: data.payment_session_id,
+      keyId: this.appId,
+      isTestMode: this.baseUrl.includes('sandbox'),
     };
   }
 
-  async verifyPayment(orderId: string, paymentDetails: any) {
+  async verifyPayment(orderId: string) {
+    if (!this.isConfigured()) {
+      return { isVerified: false, error: 'Cashfree credentials not configured' };
+    }
+
+    const response = await fetch(`${this.baseUrl}/orders/${orderId}`, {
+      method: 'GET',
+      headers: {
+        'x-client-id': this.appId,
+        'x-client-secret': this.secretKey,
+        'x-api-version': this.apiVersion,
+      },
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      return { isVerified: false, error: err.message || 'Failed to query Cashfree order' };
+    }
+
+    const data = await response.json();
+    const isPaid = data.order_status === 'PAID';
+
+    return {
+      isVerified: isPaid,
+      providerPaymentId: data.cf_order_id ? String(data.cf_order_id) : undefined,
+      error: isPaid ? undefined : `Order is in ${data.order_status} state`,
+    };
+  }
+
+  verifyWebhookSignature(rawBody: string, signature: string, timestamp: string): boolean {
+    if (!signature || !timestamp || !this.secretKey) return false;
+    const bodyToSign = timestamp + rawBody;
+    const expected = crypto.createHmac('sha256', this.secretKey).update(bodyToSign).digest('base64');
+    try {
+      return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+    } catch {
+      return false;
+    }
+  }
+}
+
+/**
+ * 3. Cash on Delivery (COD) Adapter
+ */
+export class CodPaymentAdapter implements IPaymentProvider {
+  async createPaymentOrder(
+    orderId: string,
+    amount: number,
+    currency: string = 'INR'
+  ): Promise<PaymentInitiationResult> {
+    return {
+      provider: 'cod',
+      orderId,
+      amount,
+      currency,
+      providerOrderId: `COD_${orderId.slice(0, 16)}`,
+    };
+  }
+
+  async verifyPayment(orderId: string) {
     return {
       isVerified: true,
-      providerPaymentId: `mock_pay_${Date.now()}`,
+      providerPaymentId: `COD_PENDING_${Date.now()}`,
     };
   }
 }
 
-export function getPaymentAdapter(method: 'razorpay' | 'cod' | 'mock_test'): IPaymentProvider {
-  if (method === 'razorpay') {
-    const razorpayAdapter = new RazorpayPaymentAdapter();
-    if (razorpayAdapter.isConfigured()) {
-      return razorpayAdapter;
-    }
-    // Fall back safely to mock test adapter with explicit notification
-    console.warn('[PAYMENT] Razorpay API keys not provided in .env; falling back to Mock Test Adapter');
-    return new MockTestPaymentAdapter();
+/**
+ * Factory for payment providers
+ */
+export function getPaymentAdapter(method: 'cashfree' | 'razorpay' | 'cod'): IPaymentProvider {
+  if (method === 'cashfree') {
+    const adapter = new CashfreePaymentAdapter();
+    if (adapter.isConfigured()) return adapter;
+    throw new Error('Cashfree payment gateway is selected, but CASHFREE_APP_ID / CASHFREE_SECRET_KEY are not configured.');
   }
 
-  return new MockTestPaymentAdapter();
+  if (method === 'razorpay') {
+    const adapter = new RazorpayPaymentAdapter();
+    if (adapter.isConfigured()) return adapter;
+    throw new Error('Razorpay payment gateway is selected, but NEXT_PUBLIC_RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET are not configured.');
+  }
+
+  if (method === 'cod') {
+    return new CodPaymentAdapter();
+  }
+
+  throw new Error(`Unsupported payment method: ${method}`);
 }
 
 /**
@@ -165,14 +330,23 @@ export async function processPaymentWebhookEvent(
   });
 
   try {
-    // Handle payment.captured / order.paid
-    if (eventType === 'payment.captured' || eventType === 'order.paid') {
-      const orderId = payload.notes?.fashionhub_order_id;
+    // Handle payment.captured / order.paid / PAYMENT_SUCCESS_WEBHOOK
+    const isPaymentCaptured =
+      eventType === 'payment.captured' ||
+      eventType === 'order.paid' ||
+      eventType === 'PAYMENT_SUCCESS_WEBHOOK';
+
+    if (isPaymentCaptured) {
+      const orderId =
+        payload.notes?.vorquen_order_id ||
+        payload.order?.order_id ||
+        payload.data?.order?.order_id;
+
       if (orderId) {
         await prisma.order.update({
           where: { id: orderId },
           data: {
-            orderStatus: 'processing',
+            orderStatus: 'confirmed',
             paymentStatus: 'paid',
           },
         });
@@ -182,7 +356,7 @@ export async function processPaymentWebhookEvent(
           data: {
             status: 'paid',
             paidAt: new Date(),
-            providerPaymentId: payload.id,
+            providerPaymentId: String(payload.id || payload.payment?.cf_payment_id || eventId),
           },
         });
       }

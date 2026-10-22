@@ -64,11 +64,12 @@ export interface CartCalculationResult {
 }
 
 export interface PaymentInitiationResult {
-  provider: 'razorpay' | 'cod' | 'mock_test';
+  provider: 'cashfree' | 'razorpay' | 'cod';
   orderId: string;
   amount: number;
   currency: string;
   providerOrderId?: string;
+  paymentSessionId?: string;
   keyId?: string;
   isTestMode?: boolean;
 }
